@@ -7,38 +7,41 @@ from sklearn.preprocessing import MinMaxScaler
 df = yf.download(tickers='MSFT', period = 'max', interval = '1d')
 df['days'] = np.arange(len(df))
 
-# Path: music.py
-def get_notes():
-    notes = []
-    for i in df['Close']:
-        notes.append(i)
-    return notes
+# time data (in beats)
+music_duration = 120 #seconds
+tempo = 85 #bpm
+scaler = MinMaxScaler((0,music_duration*(tempo/60)))
+beats = scaler.fit_transform(df['days'].values.reshape(-1,1)).reshape(-1)
 
-# create an algorithm to map 'MSFT' stock data with with midiutil
-def create_midi(notes, filename):
-    # create a MIDIFile object
-    mf = MIDIFile(1)
-    # add a track
-    track = 0
-    time = 0
-    mf.addTrackName(track, time, "Sample Track")
-    mf.addTempo(track, time, 120)
-    channel = 0
-    volume = 100
-    for i in notes:
-        pitch = i
-        time = 0
-        duration = 1
-        mf.addNote(track, channel, pitch, time, duration, volume)
-        time += 1
-    with open(filename, 'wb') as outf:
-        mf.writeFile(outf)
+# compress value
+values = df.Close.values
+# map values optional
+# scaler = MinMaxScaler((0,1))
+# values = scaler.fit_transform(values.reshape(-1,1))
 
-# create main function
-def main():
-    notes = get_notes()
-    create_midi(notes, '~/Desktop/midi.mid')
+# octave range
+octave_range = m21.scale.MajorScale('c').getPitches('c3','b4')
+octave_range_midi = [x.midi for x in octave_range]
 
+# map values to midi note numbers
+scaler = MinMaxScaler((0,len(octave_range)-1))
+pitch = scaler.fit_transform(values.reshape(-1,1)).round().reshape(-1)
+pitch = [octave_range_midi[int(x)] for x in pitch]
 
+# map values to velocity
+scaler = MinMaxScaler((30,127))
+velocity = scaler.fit_transform(values.reshape(-1,1)).round().reshape(-1)
+velocity = [int(x) for x in velocity]
 
-
+track = 0
+time = 0
+channel = 0
+duration = 1   # In beats
+tempo = 85      # In BPM
+MyMIDI = MIDIFile(1) 
+MyMIDI.addTempo(track,time,tempo)
+for i in range(len(df)):
+    MyMIDI.addNote(track, channel, pitch[i], beats[i], duration,
+                  velocity[i])
+with open("bitcoin_c_major.mid", "wb") as output_file:
+    MyMIDI.writeFile(output_file)

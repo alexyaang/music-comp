@@ -1,0 +1,6 @@
+music21
+midiutil
+numpy
+yfinance
+datetime
+sklearn
