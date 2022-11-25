@@ -4,11 +4,11 @@ import numpy as np
 import yfinance as yf
 from datetime import datetime
 from sklearn.preprocessing import MinMaxScaler
-df = yf.download(tickers='MSFT', period = 'max', interval = '1d')
+df = yf.download(tickers='SPY', period = 'max', interval = '1d')
 df['days'] = np.arange(len(df))
 
 # time data (in beats)
-music_duration = 120 #seconds
+music_duration = 60 #seconds
 tempo = 85 #bpm
 scaler = MinMaxScaler((0,music_duration*(tempo/60)))
 beats = scaler.fit_transform(df['days'].values.reshape(-1,1)).reshape(-1)
